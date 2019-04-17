@@ -5,15 +5,16 @@ package cn.edu.lnu.pojo;
  */
 public class Reply2Comment {
 
-    private String date;
-    private String content;
+   private String user;
+   private String content;
+   private String replyDate;
 
-    public String getDate() {
-        return date;
+    public String getUser() {
+        return user;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setUser(String user) {
+        this.user = user;
     }
 
     public String getContent() {
@@ -24,11 +25,20 @@ public class Reply2Comment {
         this.content = content;
     }
 
+    public String getReplyDate() {
+        return replyDate;
+    }
+
+    public void setReplyDate(String replyDate) {
+        this.replyDate = replyDate;
+    }
+
     @Override
     public String toString() {
         return "Reply2Comment{" +
-                "date='" + date + '\'' +
+                "user='" + user + '\'' +
                 ", content='" + content + '\'' +
+                ", replyDate='" + replyDate + '\'' +
                 '}';
     }
 }
