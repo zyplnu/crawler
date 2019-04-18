@@ -8,6 +8,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.*;
 
+/**
+ * 下载某网站的图片，保存到本地磁盘
+ */
 public class DownloadPic {
     static int count = 1;
 

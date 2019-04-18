@@ -2,7 +2,9 @@ package cn.edu.lnu.phantom;
 
 import java.io.*;
 
-
+/**
+ * phantom js学习
+ */
 public class PhantomJS {
 
     // 如果要更换运行环境，请注意exePath最后的phantom.exe需要更改。因为这个只能在window版本上运行。前面的路径名
