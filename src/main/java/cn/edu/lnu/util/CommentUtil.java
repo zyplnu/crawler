@@ -7,8 +7,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 /**
  * 获取评论工具类
@@ -71,13 +77,13 @@ public class CommentUtil {
         int count = 0;
         String html = "";
         html = URLConnection.getHtml(url);
-        if("".equals(html) || html == null){
+        if("".equals(html) || html == null || html.length() == 0){
             do {
                 html = URLConnection.getHtml(url);
                 count++;
-            }while (html == "" || count > 10);
+            }while (count < 10 && html.length() == 0 );
         }
-        if(count > 10){
+        if(count >= 10){
             System.out.println("未知原因，没有获取到数据....");
             System.exit(-1);
         }
@@ -90,32 +96,64 @@ public class CommentUtil {
      * @param page
      */
     public static void getComment(int page){
-        String url = "https://sclub.jd.com/comment/productPageComments.action?callback=fetchJSON_comment98vv15&productId=6138112&score=0&sortType=5&page=" + String.valueOf(page) + "&pageSize=10&isShadowSku=0&fold=1";
+        String url = "https://sclub.jd.com/comment/productPageComments.action?callback=fetchJSON_comment98vv108&productId=6138112&score=0&sortType=5&page=" + String.valueOf(page) + "&pageSize=10&isShadowSku=0&fold=1";
         try{
-            String html = retry4GetHtml(url);//获得爬取的数据json串
-            System.out.println("第" + (page + 1) + "页html已成功获取,开始构建json串...");
-            String start = html.substring(html.indexOf("(") + 1);
-            String end = start.substring(0,start.lastIndexOf(")"));//将json串的前后大括号去掉，构建标准的json串
-            System.out.println("json串构建完毕，准备使用....");
-            JSONObject jsStr = JSONObject.parseObject(end);//将json串转为json对象
-            String result = jsStr.getString("comments");//对评论内容进行抽取
-            List<Comment> list = JSONObject.parseArray(result , Comment.class);//将每页10条的评论数据构建为Comment对象集合
-            for(Comment comment : list){
-                System.out.println("----------------------------------------------------------------------------");
-                System.out.println("评论内容：" + comment.getContent());
-                System.out.println("评论点赞数：" + comment.getUsefulVoteCount());
-                System.out.println("评论回复数：" + comment.getReplyCount());
-                List<Reply2Comment> replyList = getReply2Comment(url , comment.getGuid());
-                System.out.println("评论回复内容：");
-                for(Reply2Comment reply : replyList){
-                    System.out.println("\t\t" + reply.getUser() + ":" + reply.getContent());
+//            String html = retry4GetHtml(url);//获得爬取的数据json串
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("D:/out.txt")) , "GBK"));
+            String line = "";
+            String html = "";
+            while((line = reader.readLine()) != null){
+                html = line;
+//                System.out.println("第" + (page + 1) + "页html已成功获取,开始构建json串...");
+                String start = html.substring(html.indexOf("(") + 1);
+                String end = start.substring(0,start.lastIndexOf(")"));//将json串的前后大括号去掉，构建标准的json串
+//                System.out.println("json串构建完毕，准备使用....");
+                JSONObject jsStr = JSONObject.parseObject(end);//将json串转为json对象
+                String result = jsStr.getString("comments");//对评论内容进行抽取
+                List<Comment> list = JSONObject.parseArray(result , Comment.class);//将每页10条的评论数据构建为Comment对象集合
+                for(Comment comment : list){
+                    //1、计算情感关键句得分：将comment的content传入情感关键句计算方法中，根据三个计算指标得出该评论的情感关键句得分
+                    /**
+                     * (1)位置因素不考虑
+                     * (2)关键词因素通过读取关键词文件授予得分，多个关键词得分进行累加
+                     * (3)情感得分通过情感词典进行判断，根据正向、中性和负向分别授予得分 1 0 -1
+                     * emotionGrade = getEmotionGrade(String content);
+                     *
+                     */
+                    List<Reply2Comment> replyList = getReply2Comment(url , comment.getGuid());
+                    //2、计算评论回复关键句得分：支持率+点赞率
+                    /**
+                     * (1)点赞率：该条评论的点赞数 / 实验数据总的评论数
+                     * (2)评论支持率：【暂未想出解决方案】
+                     * replyGrade = getReplyGrade(List<Reply2Comment> replyList);
+                     *
+                     */
+                    //3、根据权重将情感关键句得分和评论回复关键句得分进行累加计算（权重各为0.5），按照结果大小进行降序排序
+                    /**
+                     * 计算公式：finalGrade = emotionGrade * 0.5 + replyGrade * 0.5
+                     * 结果如下：【评论1：*****************】 5.0分
+                     *              --【评论回复1:************】
+                     *              --【评论回复2:***********】
+                     *         【评论2：****************】 4.8分
+                     *              --【评论回复1:************】
+                     */
+                    if(!replyList.isEmpty()){
+                        System.out.println("----------------------------------------------------------------------------");
+                        System.out.println("评论内容：" + comment.getContent());
+                        System.out.println("评论点赞数：" + comment.getUsefulVoteCount());
+                        System.out.println("评论回复数：" + comment.getReplyCount());
+                        System.out.println("评论回复内容：");
+                        for(Reply2Comment reply : replyList){
+                            System.out.println("\t\t" + reply.getUser() + ":" + reply.getContent());
+                        }
+                    }
                 }
+                page++;
             }
         } catch (Exception ex){
             System.out.println("未知异常退出，请检查...");
             System.exit(-1);
         }
-
     }
 
 }
