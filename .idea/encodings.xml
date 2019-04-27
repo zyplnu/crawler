@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources/keywords.txt" charset="GBK" />
     <file url="file://$PROJECT_DIR$/src/main/resources/negative.txt" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/out.txt" charset="GBK" />
     <file url="file://$PROJECT_DIR$/src/main/resources/positive.txt" charset="GBK" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
