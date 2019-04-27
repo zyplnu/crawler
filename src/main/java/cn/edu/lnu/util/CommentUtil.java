@@ -2,16 +2,16 @@ package cn.edu.lnu.util;
 
 import cn.edu.lnu.pojo.Comment;
 import cn.edu.lnu.pojo.Reply2Comment;
+import cn.edu.lnu.system.SystemPath;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -24,10 +24,11 @@ public class CommentUtil {
     /**
      * 根据url获取每个产品的productId
      * 目的：拼接html用于获取对于评论的回复
+     *
      * @param url
      * @return productId
      */
-    private static String getProductId(String url){
+    private static String getProductId(String url) {
         //按照url的规则进行三次分割后得到productId
         String splitStr = url.split("\\?")[1].split("&")[1].split("=")[1];
         return splitStr;
@@ -36,29 +37,31 @@ public class CommentUtil {
     /**
      * 根据productId和guid对html进行拼接
      * 目的：拼接html用于获取对于评论的回复
+     *
      * @param url
      * @param guid
      * @return
      */
-    private static String concatUrl(String url , String guid){
-        return "https://club.jd.com/repay/" + getProductId(url) + "_" + guid +"_1.html";
+    private static String concatUrl(String url, String guid) {
+        return "https://club.jd.com/repay/" + getProductId(url) + "_" + guid + "_1.html";
     }
 
     /**
      * 根据拼接的url使用jsoup进行解析，将内容进行封装到Reply2Comment中
+     *
      * @param url
      * @param guid
      * @return 解析后的内容
      */
-    public static List<Reply2Comment> getReply2Comment(String url , String guid){
-        String html = URLConnection.getHtml(concatUrl(url , guid));//获取商品评论回复html
+    public static List<Reply2Comment> getReply2Comment(String url, String guid) {
+        String html = URLConnection.getHtml(concatUrl(url, guid));//获取商品评论回复html
         //对html进行解析，并将解后的内容封装
         List<Reply2Comment> list = new ArrayList<>();
         //解析html文档，添加到list集合中
         //备注：jsoup解析学的不好，后期需要再重新学习一下，最好把时间进行解析出来
         Document document = Jsoup.parse(html);
         Elements elements = document.getElementsByClass("tt");
-        for(Element element : elements){
+        for (Element element : elements) {
             Reply2Comment reply2Comment = new Reply2Comment();
             reply2Comment.setUser(element.text().split(":")[0]);
             reply2Comment.setContent(element.text().split(":")[1]);
@@ -70,20 +73,21 @@ public class CommentUtil {
 
     /**
      * 开启重试机制(避免网络延迟)，若重试10次没有得到数据，则系统退出
+     *
      * @param url
      * @return
      */
-    public static String retry4GetHtml(String url) throws Exception{
+    public static String retry4GetHtml(String url) throws Exception {
         int count = 0;
         String html = "";
         html = URLConnection.getHtml(url);
-        if("".equals(html) || html == null || html.length() == 0){
+        if ("".equals(html) || html == null || html.length() == 0) {
             do {
                 html = URLConnection.getHtml(url);
                 count++;
-            }while (count < 10 && html.length() == 0 );
+            } while (count < 10 && html.length() == 0);
         }
-        if(count >= 10){
+        if (count >= 10) {
             System.out.println("未知原因，没有获取到数据....");
             System.exit(-1);
         }
@@ -95,65 +99,73 @@ public class CommentUtil {
      * 每个商品的评论的评论地址为：productId_guid_1.html
      * @param page
      */
-    public static void getComment(int page){
+    public static List<Comment> getComment(int page) {
         String url = "https://sclub.jd.com/comment/productPageComments.action?callback=fetchJSON_comment98vv108&productId=6138112&score=0&sortType=5&page=" + String.valueOf(page) + "&pageSize=10&isShadowSku=0&fold=1";
-        try{
+        try {
 //            String html = retry4GetHtml(url);//获得爬取的数据json串
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File("D:/out.txt")) , "GBK"));
-            String line = "";
-            String html = "";
-            while((line = reader.readLine()) != null){
-                html = line;
-//                System.out.println("第" + (page + 1) + "页html已成功获取,开始构建json串...");
+            List<Comment> list = new ArrayList<>();
+            for (String html : getOriginalFromFile()) {
                 String start = html.substring(html.indexOf("(") + 1);
-                String end = start.substring(0,start.lastIndexOf(")"));//将json串的前后大括号去掉，构建标准的json串
-//                System.out.println("json串构建完毕，准备使用....");
+                String end = start.substring(0, start.lastIndexOf(")"));//将json串的前后大括号去掉，构建标准的json串
                 JSONObject jsStr = JSONObject.parseObject(end);//将json串转为json对象
                 String result = jsStr.getString("comments");//对评论内容进行抽取
-                List<Comment> list = JSONObject.parseArray(result , Comment.class);//将每页10条的评论数据构建为Comment对象集合
-                for(Comment comment : list){
-                    //1、计算情感关键句得分：将comment的content传入情感关键句计算方法中，根据三个计算指标得出该评论的情感关键句得分
-                    /**
-                     * (1)位置因素不考虑
-                     * (2)关键词因素通过读取关键词文件授予得分，多个关键词得分进行累加
-                     * (3)情感得分通过情感词典进行判断，根据正向、中性和负向分别授予得分 1 0 -1
-                     * emotionGrade = getEmotionGrade(String content);
-                     *
-                     */
-                    List<Reply2Comment> replyList = getReply2Comment(url , comment.getGuid());
-                    //2、计算评论回复关键句得分：支持率+点赞率
-                    /**
-                     * (1)点赞率：该条评论的点赞数 / 实验数据总的评论数
-                     * (2)评论支持率：【暂未想出解决方案】
-                     * replyGrade = getReplyGrade(List<Reply2Comment> replyList);
-                     *
-                     */
-                    //3、根据权重将情感关键句得分和评论回复关键句得分进行累加计算（权重各为0.5），按照结果大小进行降序排序
-                    /**
-                     * 计算公式：finalGrade = emotionGrade * 0.5 + replyGrade * 0.5
-                     * 结果如下：【评论1：*****************】 5.0分
-                     *              --【评论回复1:************】
-                     *              --【评论回复2:***********】
-                     *         【评论2：****************】 4.8分
-                     *              --【评论回复1:************】
-                     */
-                    if(!replyList.isEmpty()){
+                List<Comment> commentList = JSONObject.parseArray(result, Comment.class);//将每页10条的评论数据构建为Comment对象集合
+                for (Comment comment : commentList) {
+                    List<Reply2Comment> replyList = getReply2Comment(url, comment.getGuid());//循环获取评论回复内容
+                    //只获取评论回复不为空的评论
+                    if (!replyList.isEmpty()) {
+                        comment.setReply2CommentList(replyList);
                         System.out.println("----------------------------------------------------------------------------");
                         System.out.println("评论内容：" + comment.getContent());
                         System.out.println("评论点赞数：" + comment.getUsefulVoteCount());
                         System.out.println("评论回复数：" + comment.getReplyCount());
                         System.out.println("评论回复内容：");
-                        for(Reply2Comment reply : replyList){
+                        for (Reply2Comment reply : comment.getReply2CommentList()) {
                             System.out.println("\t\t" + reply.getUser() + ":" + reply.getContent());
                         }
+                        list.add(comment);
                     }
                 }
-                page++;
             }
-        } catch (Exception ex){
-            System.out.println("未知异常退出，请检查...");
+            return list;
+        } catch (Exception ex) {
+            System.out.println("json解析失败...");
             System.exit(-1);
         }
+        return null;
+    }
+
+    /**
+     * 从本地获取json字符串
+     *
+     * @return 字符串集合
+     */
+    public static List<String> getOriginalFromFile() {
+        List<String> jsonList = new ArrayList<>();//初始化json字符串数组
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(SystemPath.SYSTEM_PATH_PREFIX + "out.txt")), "GBK"));
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                jsonList.add(line);
+            }
+            return jsonList;
+        } catch (UnsupportedEncodingException e) {
+            System.out.println(e.getMessage());
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+        return null;
     }
 
 }

@@ -24,6 +24,7 @@ public class Comment {
     private List<Video> video;
     private int topped;
     private String content;
+    private String preContent;//保存分词前的文本内容
     private String userLevelName;
     private boolean isReplyGrade;
     private List<Reply> replies;
@@ -60,6 +61,51 @@ public class Comment {
     private int days;
     private int plusAvailable;
     private String referenceImage;
+
+    private float emotionGrade;//评论得分
+    private List<Reply2Comment> reply2CommentList; //评论回复列表
+    private float likeRatio;//点赞率
+    private float finalResult;//情感得分*0.5 + 评论关键句得分*0.5
+
+    public String getPreContent() {
+        return preContent;
+    }
+
+    public void setPreContent(String preContent) {
+        this.preContent = preContent;
+    }
+
+    public float getFinalResult() {
+        return finalResult;
+    }
+
+    public void setFinalResult(float finalResult) {
+        this.finalResult = finalResult;
+    }
+
+    public float getLikeRatio() {
+        return likeRatio;
+    }
+
+    public void setLikeRatio(float likeRatio) {
+        this.likeRatio = likeRatio;
+    }
+
+    public float getEmotionGrade() {
+        return emotionGrade;
+    }
+
+    public void setEmotionGrade(float emotionGrade) {
+        this.emotionGrade = emotionGrade;
+    }
+
+    public List<Reply2Comment> getReply2CommentList() {
+        return reply2CommentList;
+    }
+
+    public void setReply2CommentList(List<Reply2Comment> reply2CommentList) {
+        this.reply2CommentList = reply2CommentList;
+    }
 
     public int getReplyCount() {
         return replyCount;

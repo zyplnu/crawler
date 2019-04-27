@@ -5,9 +5,18 @@ package cn.edu.lnu.pojo;
  */
 public class Reply2Comment {
 
-   private String user;
-   private String content;
-   private String replyDate;
+    private String user;
+    private String content;
+    private String replyDate;
+    private float replyGrade; //评论回复得分
+
+    public float getReplyGrade() {
+        return replyGrade;
+    }
+
+    public void setReplyGrade(float replyGrade) {
+        this.replyGrade = replyGrade;
+    }
 
     public String getUser() {
         return user;
