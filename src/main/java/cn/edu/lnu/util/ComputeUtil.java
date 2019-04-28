@@ -35,7 +35,6 @@ public class ComputeUtil {
         List<String> wordsList = new ArrayList<>();//关键词文件集合
         List<String> positiveList = new ArrayList<>();//正向情感词文件集合
         List<String> negativeList = new ArrayList<>();//负向情感词文件集合
-        BufferedReader reader = null;
         wordsList = getWordsListFromFile(keywords);
         positiveList = getWordsListFromFile(positive);
         negativeList = getWordsListFromFile(negative);
