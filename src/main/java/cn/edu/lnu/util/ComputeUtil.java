@@ -102,7 +102,6 @@ public class ComputeUtil {
         }
         for(Comment comment : resultList){
             comment.setFinalResult(comment.getEmotionGrade() * 0.5f + comment.getLikeRatio() * 0.5f);
-            System.out.println(comment.getFinalResult());
         }
         System.out.println("计算完成...");
         return resultList;

@@ -15,9 +15,7 @@ public class Client {
     public static void main(String[] args) {
 
         new EmotioAnalyzerService().printEmotionAnalyzerResult();
-        /*float a = 1.0f;
-        float b = 0.5f;
-        System.out.println((int)b - a);*/
+
     }
 
 }

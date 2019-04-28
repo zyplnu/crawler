@@ -20,6 +20,7 @@ public class EmotioAnalyzerService {
         List<Comment> list = new ComputeUtil().getFinalResult(CommentUtil.getComment(0));
 
         System.out.println("-------------------------");
+        System.out.println("处理前得分列表：");
         for (Comment comment : list){
             System.out.print(comment.getFinalResult() + "\t");
         }
@@ -38,6 +39,7 @@ public class EmotioAnalyzerService {
         });
         System.out.println();
         System.out.println("---------------------------");
+        System.out.println("处理后得分列表：");
         for(Comment comment : list){
             System.out.print(comment.getFinalResult() + "\t");
         }
